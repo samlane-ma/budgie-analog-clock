@@ -1,8 +1,8 @@
-#Budgie Analog Clock
+# Budgie Analog Clock
 
 ![Screenshot](images/clock.png?raw=true)
 
-##Add an analog clock to the Budgie Panel
+## Add an analog clock to the Budgie Panel
 
 This applet it still very much being worked on.  Therefore, stability is not promised.
 The applet currently allows you to scale the clock through the settings.
