@@ -10,7 +10,7 @@ For the time being, you can manually change colors of the clock outline, face, a
 
 Current issues:
 * If you have a light panel, the clock will be hard/impossible to see unless you change the clock colors
-* Ihe clock can be scaled larger than the panel size.  This will cause the panel to overlap windows, unless you increase the panel size as well.
+* The clock can be scaled larger than the panel size.  This will cause the panel to overlap windows, unless you increase the panel size as well.
 
 This requires python3-svgwrite to be installed:
 * sudo apt install python3-svgwrite
