@@ -1,1 +1,1 @@
-![Screenshot](inmages/clock.png?raw=true)
+![Screenshot](images/clock.png?raw=true)
