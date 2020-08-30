@@ -1,8 +1,8 @@
 [Plugin]
 Loader=python3
 Module=budgie_analog_clock
-Name=Budgie Analog Clock
-Description=Analog Clock
+Name=Analog Clock
+Description=Analog Clock for the Budgie Panel
 Authors=Samuel Lane
 Copyright=Copyright © 2020 Samuel Lane
 Website=
