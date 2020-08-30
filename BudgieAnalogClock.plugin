@@ -1,0 +1,9 @@
+[Plugin]
+Loader=python3
+Module=budgie_analog_clock
+Name=Budgie Analog Clock
+Description=Analog Clock
+Authors=Samuel Lane
+Copyright=Copyright © 2020 Samuel Lane
+Website=
+Icon=org.gnome.clocks-symbolic

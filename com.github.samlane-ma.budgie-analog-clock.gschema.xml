@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+    <schema path="/com/github/samlane-ma/budgie-analog-clock/" 
+              id="com.github.samlane-ma.budgie-analog-clock">
+        <key name="clock-size" type="i">
+            <summary>Clock Size</summary>
+            <description>
+                Size of the clock in pixels
+            </description>
+            <default>24</default>
+        </key>
+        <key type="s" name="clock-outline">
+            <summary>Set the color of the clock outline</summary>
+            <description>Hex color of the clock outline</description>
+            <default>"#FFFFFF"</default>
+        </key>
+        <key type="s" name="clock-face">
+            <summary>Set the color of the clock face</summary>
+            <description>Hex color of the clock face</description>
+            <default>"none"</default>
+        </key>
+        <key type="s" name="clock-hands">
+            <summary>Set the color of the clock hour hand</summary>
+            <description>Hex color of the clock hour hand</description>
+            <default>"#FFFFFF"</default>
+        </key>
+    </schema> 
+</schemalist>

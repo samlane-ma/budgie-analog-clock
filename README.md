@@ -1,2 +1,1 @@
-# budgie-analog-clock
-Analog Clock for the Budgie Panel
+![Screenshot](inmages/clock.png?raw=true)
