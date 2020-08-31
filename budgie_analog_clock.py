@@ -60,6 +60,9 @@ class BudgieAnalogClockSettings(Gtk.Grid):
     def __init__(self, setting):
         super().__init__()
 
+        self.label_colors = ["Clock Color", "Hands Color", "Face Color"]
+        self.setting_name = ["clock-outline", "clock-hands", "clock-face"]
+
         self.blank_label = Gtk.Label("")
         self.attach(self.blank_label, 0, 0, 2, 1)
         self.label_size = Gtk.Label("Clock Size (px)")
@@ -74,34 +77,20 @@ class BudgieAnalogClockSettings(Gtk.Grid):
         self.spin_clock_size.connect("changed",self.on_clock_size_changed)
         self.attach(self.spin_clock_size, 1, 1, 1, 1)
 
-        self.label_clock_color = Gtk.Label("Clock Color")
-        self.label_clock_color.set_alignment(0,0)
-        load_color = app_settings.get_string("clock-outline")
-        r, g, b = self.hex_to_colors(load_color)
-        self.button_clock_color = Gtk.ColorButton.new_with_color(Gdk.Color(red=r, green=g, blue=b))
-        self.button_clock_color.connect("color_set",self.on_color_changed, "clock-outline")
-        self.attach(self.label_clock_color, 0, 2, 1, 1)
-        self.attach(self.button_clock_color, 1, 2, 1, 1)
+        self.colorbuttons = []
 
-        self.label_hands_color = Gtk.Label("Hands Color")
-        self.label_hands_color.set_alignment(0,0)
-        load_color = app_settings.get_string("clock-hands")
-        r, g, b = self.hex_to_colors(load_color)
-        self.button_hands_color = Gtk.ColorButton.new_with_color(Gdk.Color(red=r, green=g, blue=b))
-        self.button_hands_color.connect("color_set",self.on_color_changed, "clock-hands")
-        self.attach(self.label_hands_color, 0, 3, 1, 1)
-        self.attach(self.button_hands_color, 1, 3, 1, 1)
-
-        self.label_face_color = Gtk.Label("Face Color")
-        self.label_face_color.set_alignment(0,0)
-        load_color = app_settings.get_string("clock-face")
-        if load_color == "none":
-            load_color = "#000000"
-        r, g, b = self.hex_to_colors(load_color)
-        self.button_face_color = Gtk.ColorButton.new_with_color(Gdk.Color(red=r, green=g, blue=b))
-        self.button_face_color.connect("color_set",self.on_color_changed, "clock-face")
-        self.attach(self.label_face_color, 0, 4, 1, 1)
-        self.attach(self.button_face_color, 1, 4, 1, 1)
+        for n in range(3):
+            colorlabel = Gtk.Label(self.label_colors[n])
+            colorlabel.set_alignment(0,0)
+            load_color = app_settings.get_string(self.setting_name[n])
+            if load_color == "none":
+                load_color = "#000000"
+            r, g, b = self.hex_to_colors(load_color)
+            button = Gtk.ColorButton.new_with_color(Gdk.Color(red=r, green=g, blue=b))
+            button.connect("color_set",self.on_color_changed,self.setting_name[n])
+            self.colorbuttons.append(button)
+            self.attach(colorlabel, 0, n+2, 1, 1)
+            self.attach(self.colorbuttons[n], 1, n+2, 1, 1)
 
         self.label_reset = Gtk.Label("Reset clock face \nto transparent")
         self.label_reset.set_alignment(0,0)
@@ -113,6 +102,7 @@ class BudgieAnalogClockSettings(Gtk.Grid):
         self.show_all()
 
     def hex_to_colors (self, hex_color):
+        # TODO: Check if hex_color is valid format
         rx = hex_color[1:3]
         gx = hex_color[3:5]
         bx = hex_color[5:7]
@@ -123,10 +113,10 @@ class BudgieAnalogClockSettings(Gtk.Grid):
 
     def on_reset_face(self, button):
         app_settings.set_string("clock-face","none")
-       
+
     def on_clock_size_changed(self, spinner):
         app_settings.set_int("clock-size",spinner.get_value())
-        
+
     def on_color_changed (self, button, clock_part):
         color = button.get_color()
         hex_code = "#{:02x}{:02x}{:02x}".format(int(color.red/256),int(color.green/256),int(color.blue/256))
@@ -136,7 +126,6 @@ class BudgieAnalogClockSettings(Gtk.Grid):
 class BudgieAnalogClockApplet(Budgie.Applet):
     """ Budgie.Applet is in fact a Gtk.Bin """
     manager = None
-    old_minute = -1
 
     def __init__(self, uuid):
 
@@ -146,19 +135,14 @@ class BudgieAnalogClockApplet(Budgie.Applet):
 
         user = os.environ["USER"]
         self.tmp = os.path.join("/tmp", user + "_panel_analog_clock.svg")
-        
+
         self.box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.add(self.box)
-        
-        self.clock_scale = app_settings.get_int("clock-size")
-        self.hands_color = app_settings.get_string("clock-hands")
-        self.line_color = app_settings.get_string("clock-outline")
-        self.fill_color = app_settings.get_string("clock-face")
-
-        self.clock_image = Gtk.Image()	
+        self.clock_image = Gtk.Image()
+        self.update_settings("","")
         self.update_time()
         self.show_all()
-        
+
         app_settings.connect("changed",self.update_settings)
         GLib.timeout_add_seconds(5, self.update_time)
 
@@ -189,11 +173,8 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         # If time is PM
         if hours > 12:
             hours -= 12
-
         # Treat hour hand like minute hand so it can be between hour markings
         hours = hours * 5 + (mins / 12)
-        hour_hand_x, hour_hand_y = self.get_clock_hand_xy (hours, HOUR_HAND_LENGTH)
-        mx, my = self.get_clock_hand_xy (mins, MINUTE_HAND_LENGTH)
 
         dwg = svgwrite.Drawing(self.tmp, (100, 100))
         # Draw an outside circle for the clock, and a small circle at the base of the hands
@@ -202,6 +183,7 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         dwg.add(dwg.circle((X_CENTER, Y_CENTER), 3, 
                            stroke=self.hands_color, stroke_width=3))
 
+        # TODO: Maybe make the markings optional
         # We are going to add hour markings around the outside edge of the clock
         for markings in range(12):
             mark_rad = pi * 2 - (markings * (pi * 2) / 12)
@@ -210,8 +192,10 @@ class BudgieAnalogClockApplet(Budgie.Applet):
             dwg.add(dwg.circle((mark_x,mark_y), 2, fill=self.line_color))
 
         # Draw the minute and hour hands from the center to the calculated points
+        hour_hand_x, hour_hand_y = self.get_clock_hand_xy (hours, HOUR_HAND_LENGTH)
+        minute_hand_x, minute_hand_y = self.get_clock_hand_xy (mins, MINUTE_HAND_LENGTH)
         dwg.add(dwg.line((X_CENTER,Y_CENTER), (hour_hand_x,hour_hand_y), stroke=self.hands_color, stroke_width=6))
-        dwg.add(dwg.line((X_CENTER,Y_CENTER), (mx,my), stroke=self.hands_color, stroke_width=6))
+        dwg.add(dwg.line((X_CENTER,Y_CENTER), (minute_hand_x,minute_hand_y), stroke=self.hands_color, stroke_width=6))
         dwg.save()
 
     def get_clock_hand_xy (self, hand_position, LENGTH):
