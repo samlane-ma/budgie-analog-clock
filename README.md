@@ -5,8 +5,7 @@
 ## Add an analog clock to the Budgie Panel
 
 This applet it still very much being worked on.  Therefore, stability is not promised.
-The applet currently allows you to scale the clock through the settings.
-For the time being, you can manually change colors of the clock outline, face, and hands through dconf.
+The applet currently allows you to scale the clock and change colors through the settings.
 
 Current issues:
 * If you have a light panel, the clock will be hard/impossible to see unless you change the clock colors
