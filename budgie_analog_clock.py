@@ -1,11 +1,12 @@
 import gi.repository
+gi.require_version('Budgie', '1.0')
+from gi.repository import Budgie, GObject, Gtk, GdkPixbuf, GLib, Gio, Gdk
 import time
 import os
-gi.require_version('Budgie', '1.0')
-from gi.repository import Budgie, GObject, Gtk, GdkPixbuf, GLib, Gio
-from math import sin, cos, pi
 import svgwrite
 import datetime
+from math import sin, cos, pi
+
 
 
 """
@@ -63,24 +64,77 @@ class BudgieAnalogClockSettings(Gtk.Grid):
         
         self.blank_label = Gtk.Label("")
         self.attach(self.blank_label, 0, 0, 2, 1)
-        self.size_label = Gtk.Label("Clock Size (pixels)")
-        self.attach(self.size_label, 0, 1, 1, 1)
+        self.label_size = Gtk.Label("Clock Size (px)")
+        self.label_size.set_alignment(0,0)
+        self.attach(self.label_size, 0, 1, 1, 1)
         
-        self.adj = Gtk.Adjustment(value=app_settings.get_int("clock-size"),lower=10, upper=100, step_incr=1, page_incr=10)
+        self.adj = Gtk.Adjustment(value=app_settings.get_int("clock-size"),
+                                  lower=10, upper=100, step_incr=1)
         self.spin_clock_size = Gtk.SpinButton()
         self.spin_clock_size.set_adjustment(self.adj)
         self.spin_clock_size.set_digits(0)
-        self.spin_clock_size.connect("changed",self.clock_size_changed)
+        self.spin_clock_size.connect("changed",self.on_clock_size_changed)
         self.attach(self.spin_clock_size, 1, 1, 1, 1)
         
-        # IN PROGRESS 		
-        # Change clock color
-        # Change clock fill color  ??
+        self.label_clock_color = Gtk.Label("Clock Color")
+        self.label_clock_color.set_alignment(0,0)
+        load_color = app_settings.get_string("clock-outline")
+        r, g, b = self.hex_to_colors(load_color)
+        self.button_clock_color = Gtk.ColorButton.new_with_color(Gdk.Color(red=r, green=g, blue=b))
+        self.button_clock_color.connect("color_set",self.on_color_changed, "clock-outline")
+        self.attach(self.label_clock_color, 0, 2, 1, 1)
+        self.attach(self.button_clock_color, 1, 2, 1, 1)
+        
+        self.label_hands_color = Gtk.Label("Hands Color")
+        self.label_hands_color.set_alignment(0,0)
+        load_color = app_settings.get_string("clock-hands")
+        r, g, b = self.hex_to_colors(load_color)
+        self.button_hands_color = Gtk.ColorButton.new_with_color(Gdk.Color(red=r, green=g, blue=b))
+        self.button_hands_color.connect("color_set",self.on_color_changed, "clock-hands")
+        self.attach(self.label_hands_color, 0, 3, 1, 1)
+        self.attach(self.button_hands_color, 1, 3, 1, 1)
+        
+        self.label_face_color = Gtk.Label("Face Color")
+        self.label_face_color.set_alignment(0,0)
+        load_color = app_settings.get_string("clock-face")
+        if load_color == "none":
+            load_color = "#000000"
+        r, g, b = self.hex_to_colors(load_color)
+        self.button_face_color = Gtk.ColorButton.new_with_color(Gdk.Color(red=r, green=g, blue=b))
+        self.button_face_color.connect("color_set",self.on_color_changed, "clock-face")
+        self.attach(self.label_face_color, 0, 4, 1, 1)
+        self.attach(self.button_face_color, 1, 4, 1, 1)
+        
+        self.label_reset = Gtk.Label("Reset clock face \n to transparent")
+        self.label_reset.set_alignment(0,0)
+        self.button_reset_face = Gtk.Button("Reset")
+        self.button_reset_face.connect("clicked",self.on_reset_face)
+        self.attach(self.label_reset, 0, 5, 1, 1)
+        self.attach(self.button_reset_face, 1, 5, 1, 1)
         
         self.show_all()
+        
+    def hex_to_colors (self, hex_color):
+        rx = hex_color[1:3]
+        gx = hex_color[3:5]
+        bx = hex_color[5:7]
+        red = int(rx,16) * 255
+        green = int(gx,16) * 255
+        blue = int(bx,16) * 255
+        return red, green, blue
+        
+    
+    def on_reset_face(self, button):
+        app_settings.set_string("clock-face","none")
        
-    def clock_size_changed(self, spinner):
+    def on_clock_size_changed(self, spinner):
         app_settings.set_int("clock-size",spinner.get_value())
+        
+    def on_color_changed (self, button, clock_part):
+        color = button.get_color()
+        hex_code = "#{:02x}{:02x}{:02x}".format(int(color.red/256),int(color.green/256),int(color.blue/256))
+        app_settings.set_string(clock_part, hex_code)
+        
 
 
 class BudgieAnalogClockApplet(Budgie.Applet):
@@ -162,8 +216,10 @@ class BudgieAnalogClockApplet(Budgie.Applet):
 
         dwg = svgwrite.Drawing(self.tmp, (100, 100))
         # Draw an outside circle for the clock, and a small circle at the base of the hands
-        dwg.add(dwg.circle((x_center, y_center), clock_rad, fill=self.fill_color, stroke=self.line_color, stroke_width=6))
-        dwg.add(dwg.circle((x_center, y_center), 3, stroke=self.hands_color, stroke_width=3))
+        dwg.add(dwg.circle((x_center, y_center), clock_rad, 
+                           fill=self.fill_color, stroke=self.line_color, stroke_width=4))
+        dwg.add(dwg.circle((x_center, y_center), 3, 
+                           stroke=self.hands_color, stroke_width=3))
         # We are going to add hour markings around the outside edge of the clock
         markings = 12
         while markings > 0:
