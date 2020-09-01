@@ -138,7 +138,7 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         self.update_clock("","")
         self.show_all()
         app_settings.connect("changed",self.update_clock)
-        GLib.timeout_add(100, self.update_time)
+        GLib.timeout_add_seconds(5, self.update_time)
 
     def do_panel_size_changed(self,panel_size,icon_size,small_icon_size):
         # Keeps the clock smaller than the panel, but no smaller than 22px
