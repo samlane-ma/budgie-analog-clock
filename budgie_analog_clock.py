@@ -64,9 +64,11 @@ class BudgieAnalogClockSettings(Gtk.Grid):
         self.setting_name = ["clock-outline", "clock-hands", "clock-face"]
 
         self.blank_label = Gtk.Label("")
+        self.blank_label.set_halign(Gtk.Align.START)
         self.attach(self.blank_label, 0, 0, 2, 1)
         self.label_size = Gtk.Label("Clock Size (px)")
-        self.label_size.set_alignment(0,0)
+        self.label_size.set_halign(Gtk.Align.START)
+        self.label_size.set_valign(Gtk.Align.CENTER)
         self.attach(self.label_size, 0, 1, 1, 1)
 
         self.adj = Gtk.Adjustment(value=app_settings.get_int("clock-size"),
@@ -81,35 +83,27 @@ class BudgieAnalogClockSettings(Gtk.Grid):
 
         for n in range(3):
             colorlabel = Gtk.Label(self.label_colors[n])
-            colorlabel.set_alignment(0,0)
+            colorlabel.set_halign(Gtk.Align.START)
             load_color = app_settings.get_string(self.setting_name[n])
+            color = Gdk.RGBA()
             if load_color == "none":
-                load_color = "#000000"
-            r, g, b = self.hex_to_colors(load_color)
-            button = Gtk.ColorButton.new_with_color(Gdk.Color(red=r, green=g, blue=b))
+                color.parse("rgba(0,0,0,0)")
+            else:
+                color.parse(load_color)
+            button = Gtk.ColorButton.new_with_rgba(color)
             button.connect("color_set",self.on_color_changed,self.setting_name[n])
             self.colorbuttons.append(button)
             self.attach(colorlabel, 0, n+2, 1, 1)
             self.attach(self.colorbuttons[n], 1, n+2, 1, 1)
 
         self.label_reset = Gtk.Label("Reset clock face \nto transparent")
-        self.label_reset.set_alignment(0,0)
+        self.label_reset.set_halign(Gtk.Align.START)
         self.button_reset_face = Gtk.Button("Reset")
         self.button_reset_face.connect("clicked",self.on_reset_face)
         self.attach(self.label_reset, 0, 5, 1, 1)
         self.attach(self.button_reset_face, 1, 5, 1, 1)
 
         self.show_all()
-
-    def hex_to_colors (self, hex_color):
-        # TODO: Check if hex_color is valid format
-        rx = hex_color[1:3]
-        gx = hex_color[3:5]
-        bx = hex_color[5:7]
-        red = int(rx,16) * 255
-        green = int(gx,16) * 255
-        blue = int(bx,16) * 255
-        return red, green, blue
 
     def on_reset_face(self, button):
         app_settings.set_string("clock-face","none")
@@ -139,12 +133,23 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         self.box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.add(self.box)
         self.clock_image = Gtk.Image()
+        self.validate_settings()
         self.update_settings("","")
         self.update_time()
         self.show_all()
 
         app_settings.connect("changed",self.update_settings)
         GLib.timeout_add_seconds(5, self.update_time)
+
+    def validate_settings(self):
+        # Reset invalid colors to defaults - "none" is a valid color name
+        setting_name = ["clock-hands", "clock-outline", "clock-face"]
+        default_color = ["#000000", "#000000", "#FFFFFF"]
+        for n in range(3):
+            testcolor = Gdk.RGBA()
+            colorname = app_settings.get_string(setting_name[n])
+            if (colorname != "none") and (not testcolor.parse(colorname)):
+                app_settings.set_string(setting_name[n],default_color[n])
 
     def update_settings(self,arg1,arg2):
         self.old_minute = -1
@@ -157,7 +162,7 @@ class BudgieAnalogClockApplet(Budgie.Applet):
     def update_time(self):
         self.current_time = datetime.datetime.now()
         # Don't redraw unless time (minute) has changed
-        if self.current_time.minute != self.old_minute :
+        if self.current_time.minute != self.old_minute:
             self.old_minute = self.current_time.minute
             self.create_clock_image(self.current_time.hour, self.current_time.minute)
             self.load_new_image()
