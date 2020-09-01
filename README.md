@@ -8,10 +8,10 @@ This applet it still very much being worked on.  Therefore, stability is not pro
 The applet currently allows you to scale the clock and change colors through the settings.
 
 Current issues:
-* If you have a light panel, the clock will be hard/impossible to see unless you change the clock colors
-* The clock can be scaled larger than the panel size.  This will cause the panel to overlap windows, unless you increase the panel size as well.
+* To prevent panel overlap issues, if you decrease the panel size, the clock will decrease in size if necessary to keep it smaller than the panel.  If you then increase the panel size, you will need to re-adjust the clock size if you want it to be larger again.  It doesn't "remember" the old setting.
 
 This requires python3-svgwrite to be installed:
+(if you have Budgie Clockworks, you have this)
 * sudo apt install python3-svgwrite
 
 To install:
