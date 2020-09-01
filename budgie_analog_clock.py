@@ -76,7 +76,6 @@ class BudgieAnalogClockSettings(Gtk.Grid):
         self.spin_clock_size = Gtk.SpinButton()
         self.spin_clock_size.set_adjustment(self.adj)
         self.spin_clock_size.set_digits(0)
-        self.spin_clock_size.connect("changed",self.on_clock_size_changed)
         self.attach(self.spin_clock_size, 1, 1, 1, 1)
 
         self.colorbuttons = []
@@ -103,13 +102,12 @@ class BudgieAnalogClockSettings(Gtk.Grid):
         self.attach(self.label_reset, 0, 5, 1, 1)
         self.attach(self.button_reset_face, 1, 5, 1, 1)
 
+        app_settings.bind("clock-size",self.spin_clock_size,"value",Gio.SettingsBindFlags.DEFAULT)
+
         self.show_all()
 
     def on_reset_face(self, button):
         app_settings.set_string("clock-face","none")
-
-    def on_clock_size_changed(self, spinner):
-        app_settings.set_int("clock-size",spinner.get_value())
 
     def on_color_changed (self, button, clock_part):
         color = button.get_color()
@@ -135,12 +133,12 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         self.box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.add(self.box)
         self.clock_image = Gtk.Image()
-        self.clock_image.set_tooltip_text(time.ctime())
+        self.box.add(self.clock_image)
         self.validate_settings()
         self.update_clock("","")
         self.show_all()
         app_settings.connect("changed",self.update_clock)
-        GLib.timeout_add_seconds(5, self.update_time)
+        GLib.timeout_add(100, self.update_time)
 
     def do_panel_size_changed(self,panel_size,icon_size,small_icon_size):
         # Keeps the clock smaller than the panel, but no smaller than 22px
@@ -176,19 +174,16 @@ class BudgieAnalogClockApplet(Budgie.Applet):
 
     def update_time(self):
         self.current_time = datetime.datetime.now()
-        self.clock_image.set_tooltip_text(time.ctime())
         # Don't redraw unless time (minute) has changed
         if self.current_time.minute != self.old_minute:
             self.old_minute = self.current_time.minute
             self.create_clock_image(self.current_time.hour, self.current_time.minute)
-            self.load_new_image()
+            GObject.idle_add(self.load_new_image)
         return True
 
     def load_new_image(self):
-        self.box.remove(self.clock_image)
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.tmp)
         self.clock_image.set_from_pixbuf(self.pixbuf.scale_simple(self.clock_scale, self.clock_scale, 2))
-        self.box.add(self.clock_image)
 
     def create_clock_image (self, hours, mins):
         # If time is PM
