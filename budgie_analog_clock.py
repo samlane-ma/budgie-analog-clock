@@ -72,7 +72,7 @@ class BudgieAnalogClockSettings(Gtk.Grid):
         self.attach(self.label_size, 0, 1, 1, 1)
 
         self.adj = Gtk.Adjustment(value=app_settings.get_int("clock-size"),
-                                  lower=10, upper=100, step_incr=1)
+                                  lower=22, upper=100, step_incr=1)
         self.spin_clock_size = Gtk.SpinButton()
         self.spin_clock_size.set_adjustment(self.adj)
         self.spin_clock_size.set_digits(0)
@@ -127,19 +127,31 @@ class BudgieAnalogClockApplet(Budgie.Applet):
 
         self.uuid = uuid
 
+        self.max_size = 100
+
         user = os.environ["USER"]
         self.tmp = os.path.join("/tmp", user + "_panel_analog_clock.svg")
 
         self.box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
         self.add(self.box)
         self.clock_image = Gtk.Image()
+        self.clock_image.set_tooltip_text(time.ctime())
         self.validate_settings()
-        self.update_settings("","")
-        self.update_time()
+        self.update_clock("","")
         self.show_all()
-
-        app_settings.connect("changed",self.update_settings)
+        app_settings.connect("changed",self.update_clock)
         GLib.timeout_add_seconds(5, self.update_time)
+
+    def do_panel_size_changed(self,panel_size,icon_size,small_icon_size):
+        # Keeps the clock smaller than the panel, but no smaller than 22px
+        self.max_size = panel_size - 6
+        if self.max_size < 22:
+            self.max_size = 22
+        current_size = app_settings.get_int("clock-size")
+        if current_size < 22:
+            app_settings.set_int("clock-size",22)
+        elif current_size > self.max_size:
+            app_settings.set_int("clock-size",self.max_size)
 
     def validate_settings(self):
         # Reset invalid colors to defaults - "none" is a valid color name
@@ -151,8 +163,11 @@ class BudgieAnalogClockApplet(Budgie.Applet):
             if (colorname != "none") and (not testcolor.parse(colorname)):
                 app_settings.set_string(setting_name[n],default_color[n])
 
-    def update_settings(self,arg1,arg2):
+    def update_clock(self,arg1,arg2):
         self.old_minute = -1
+        self.validate_settings()
+        if app_settings.get_int("clock-size") > self.max_size:
+            app_settings.set_int("clock-size",self.max_size)
         self.clock_scale = app_settings.get_int("clock-size")
         self.hands_color = app_settings.get_string("clock-hands")
         self.line_color = app_settings.get_string("clock-outline")
@@ -161,6 +176,7 @@ class BudgieAnalogClockApplet(Budgie.Applet):
 
     def update_time(self):
         self.current_time = datetime.datetime.now()
+        self.clock_image.set_tooltip_text(time.ctime())
         # Don't redraw unless time (minute) has changed
         if self.current_time.minute != self.old_minute:
             self.old_minute = self.current_time.minute
