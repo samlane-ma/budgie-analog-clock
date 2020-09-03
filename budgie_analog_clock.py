@@ -27,11 +27,20 @@ from math import sin, cos, pi
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+IMAGE_SIZE = 100
 X_CENTER = 50
 Y_CENTER = 50
 CLOCK_RADIUS = 37
 HOUR_HAND_LENGTH = 21
 MINUTE_HAND_LENGTH = 31
+UPDATE_INTERVAL = 5
+""" The applet checks the time every UPDATE_INTERVAL seconds. However, the
+    clock only redraws if the minute has changed, so if an immediate update is
+    needed due to a settings change, we set the old minute to -1 to force the
+    update, instead of waiting for the minute to change. The FORCE_UPDATE
+    "constant" is just to clarify the purpose of using "-1" in the code.
+"""
+FORCE_UPDATE = -1
 
 app_settings = Gio.Settings.new("com.github.samlane-ma.budgie-analog-clock")
 
@@ -126,6 +135,7 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         self.uuid = uuid
 
         self.max_size = 100
+        self.clock_scale = 28
 
         user = os.environ["USER"]
         self.tmp = os.path.join("/tmp", user + "_panel_analog_clock.svg")
@@ -138,7 +148,7 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         self.update_clock("","")
         self.show_all()
         app_settings.connect("changed",self.update_clock)
-        GLib.timeout_add_seconds(5, self.update_time)
+        GLib.timeout_add_seconds(UPDATE_INTERVAL, self.update_time)
 
     def do_panel_size_changed(self,panel_size,icon_size,small_icon_size):
         # Keeps the clock smaller than the panel, but no smaller than 22px
@@ -149,7 +159,8 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         if current_size < 22:
             app_settings.set_int("clock-size",22)
         elif current_size > self.max_size:
-            app_settings.set_int("clock-size",self.max_size)
+            self.clock_scale = self.max_size
+        self.update_clock("","")
 
     def validate_settings(self):
         # Reset invalid colors to defaults - "none" is a valid color name
@@ -162,11 +173,11 @@ class BudgieAnalogClockApplet(Budgie.Applet):
                 app_settings.set_string(setting_name[n],default_color[n])
 
     def update_clock(self,arg1,arg2):
-        self.old_minute = -1
+        self.old_minute = FORCE_UPDATE
         self.validate_settings()
-        if app_settings.get_int("clock-size") > self.max_size:
-            app_settings.set_int("clock-size",self.max_size)
         self.clock_scale = app_settings.get_int("clock-size")
+        if self.clock_scale > self.max_size:
+            self.clock_scale = self.max_size
         self.hands_color = app_settings.get_string("clock-hands")
         self.line_color = app_settings.get_string("clock-outline")
         self.fill_color = app_settings.get_string("clock-face")
@@ -192,7 +203,7 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         # Treat hour hand like minute hand so it can be between hour markings
         hours = hours * 5 + (mins / 12)
 
-        dwg = svgwrite.Drawing(self.tmp, (100, 100))
+        dwg = svgwrite.Drawing(self.tmp, (IMAGE_SIZE, IMAGE_SIZE))
         # Draw an outside circle for the clock, and a small circle at the base of the hands
         dwg.add(dwg.circle((X_CENTER, Y_CENTER), CLOCK_RADIUS, 
                            fill=self.fill_color, stroke=self.line_color, stroke_width=4))
