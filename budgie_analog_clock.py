@@ -9,7 +9,7 @@ from math import sin, cos, pi
 
 """
     Analog Clock Applet for the Budgie Panel
- 
+
     Copyright © 2020 Samuel Lane
     http://github.com/samlane-ma/
 
@@ -32,21 +32,24 @@ from math import sin, cos, pi
     then scaled to fit panel
 """
 IMAGE_SIZE         = 100  # 100 default
+MAXIMUM_SIZE       = 100  # 100 default
+MINIMUM_SIZE       =  22  #  22 default
 X_CENTER           =  50  #  50 default
 Y_CENTER           =  50  #  50 default
 CLOCK_RADIUS       =  37  #  37 default
 HOUR_HAND_LENGTH   =  21  #  21 default
 MINUTE_HAND_LENGTH =  31  #  31 default
 CLOCK_THICKNESS    =   4  #   4 default
-HAND_THICKNESS     =   6  #   6 default
-UPDATE_INTERVAL    =   5  #   5 default (seconds)
+HAND_THICKNESS     =   4  #   6 default
+MARKING_THICKNESS  =   2  #   2 default
+UPDATE_INTERVAL    =   5  #   5 default (in seconds)
 """ The applet checks the time every UPDATE_INTERVAL seconds. However, the
     clock only redraws if the minute has changed, so if an immediate redraw is
     needed due to a settings change, we set the old minute to -1 to trigger the
     redraw, instead of waiting for the minute to change. The following 
-    FORCE_UPDATE "constant" is just to clarify using "-1" in the code.
+    FORCE_REDRAW "constant" is just to clarify using "-1" in the code.
 """
-FORCE_UPDATE = -1
+FORCE_REDRAW = -1
 
 app_settings = Gio.Settings.new("com.github.samlane-ma.budgie-analog-clock")
 
@@ -86,7 +89,7 @@ class BudgieAnalogClockSettings(Gtk.Grid):
         self.attach(label_size, 0, 1, 1, 1)
 
         spin_clock_size_adj = Gtk.Adjustment(value=app_settings.get_int("clock-size"),
-                             lower=22, upper=100, step_incr=1)
+                             lower=MINIMUM_SIZE, upper=100, step_incr=1)
         spin_clock_size = Gtk.SpinButton()
         spin_clock_size.set_adjustment(spin_clock_size_adj)
         spin_clock_size.set_digits(0)
@@ -109,9 +112,9 @@ class BudgieAnalogClockSettings(Gtk.Grid):
             self.attach(colorlabel, 0, n+2, 1, 1)
             self.attach(self.colorbuttons[n], 1, n+2, 1, 1)
 
-        label_reset = Gtk.Label("Reset clock face \nto transparent")
+        label_reset = Gtk.Label("Set clock face\ntransparent")
         label_reset.set_halign(Gtk.Align.START)
-        button_reset_face = Gtk.Button("Reset")
+        button_reset_face = Gtk.Button("Set")
         button_reset_face.connect("clicked",self.on_reset_face)
         self.attach(label_reset, 0, 5, 1, 1)
         self.attach(button_reset_face, 1, 5, 1, 1)
@@ -154,7 +157,7 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         user = os.environ["USER"]
         self.tmp = os.path.join("/tmp", user + "_panel_analog_clock.svg")
 
-        self.max_size = 100
+        self.max_size = MAXIMUM_SIZE
 
         self.validate_settings()
         self.load_settings()
@@ -175,13 +178,13 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         self.update_clock()
 
     def do_panel_size_changed(self,panel_size,icon_size,small_icon_size):
-        # Keeps the clock smaller than the panel, but no smaller than 22px
+        # Keeps the clock smaller than panel, but no smaller than MINIMUM_SIZE
         self.max_size = panel_size - 6
-        if self.max_size < 22:
-            self.max_size = 22
+        if self.max_size < MINIMUM_SIZE:
+            self.max_size = MINIMUM_SIZE
         current_size = app_settings.get_int("clock-size")
-        if current_size < 22:
-            app_settings.set_int("clock-size",22)
+        if current_size < MINIMUM_SIZE:
+            app_settings.set_int("clock-size",MINIMUM_SIZE)
         elif current_size > self.max_size:
             self.clock_scale = self.max_size
         self.update_clock()
@@ -213,7 +216,7 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         self.draw_hour_marks = app_settings.get_boolean("draw-marks")
 
     def update_clock(self):
-        self.old_minute = FORCE_UPDATE
+        self.old_minute = FORCE_REDRAW
         self.validate_settings()
         self.update_time()
 
@@ -248,9 +251,12 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         if self.draw_hour_marks:
             for markings in range(12):
                 mark_rad = pi * 2 - (markings * (pi * 2) / 12)
-                mark_x = round (X_CENTER + (CLOCK_RADIUS - 3) * cos(mark_rad))
-                mark_y = round (X_CENTER + (CLOCK_RADIUS - 3)  * sin(mark_rad))
-                dwg.add(dwg.circle((mark_x,mark_y), 2, fill=self.line_color))
+                mark_x_start = round (X_CENTER + (CLOCK_RADIUS - 4) * cos(mark_rad))
+                mark_x_end = round (X_CENTER + (CLOCK_RADIUS - 8) * cos(mark_rad))
+                mark_y_start = round (X_CENTER + (CLOCK_RADIUS - 4)  * sin(mark_rad))
+                mark_y_end = round (X_CENTER + (CLOCK_RADIUS -8)  * sin(mark_rad))
+                dwg.add(dwg.line((mark_x_start, mark_y_start), (mark_x_end, mark_y_end),
+                                  stroke=self.line_color, stroke_width=MARKING_THICKNESS))
 
         # Draw the minute and hour hands from the center to the calculated points
         hour_hand_x, hour_hand_y = self.get_clock_hand_xy (hours, HOUR_HAND_LENGTH)
@@ -261,7 +267,7 @@ class BudgieAnalogClockApplet(Budgie.Applet):
                           stroke=self.hands_color, stroke_width=HAND_THICKNESS))
         dwg.save()
 
-    def get_clock_hand_xy (self, hand_position, LENGTH):
+    def get_clock_hand_xy (self, hand_position,length):
         """ This fixes the issue that 0 degrees on a cirlce is actually 3:00
             on a clock, not 12:00 -essentially rotates the hands 90 degrees
         """
@@ -270,8 +276,8 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         hand_position = (hand_position - 15)
         # And here is how we determine the x and y coordinate to draw to
         radians = (hand_position * (pi * 2) / 60)
-        x_position = round (X_CENTER + LENGTH * cos(radians))
-        y_position = round (Y_CENTER + LENGTH * sin(radians))
+        x_position = round (X_CENTER + length * cos(radians))
+        y_position = round (Y_CENTER + length * sin(radians))
         return x_position, y_position
 
     def do_supports_settings(self):
