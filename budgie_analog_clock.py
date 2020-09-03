@@ -89,7 +89,7 @@ class BudgieAnalogClockSettings(Gtk.Grid):
         self.attach(label_size, 0, 1, 1, 1)
 
         spin_clock_size_adj = Gtk.Adjustment(value=app_settings.get_int("clock-size"),
-                             lower=MINIMUM_SIZE, upper=100, step_incr=1)
+                             lower=MINIMUM_SIZE, upper=MAXIMUM_SIZE, step_incr=1)
         spin_clock_size = Gtk.SpinButton()
         spin_clock_size.set_adjustment(spin_clock_size_adj)
         spin_clock_size.set_digits(0)
