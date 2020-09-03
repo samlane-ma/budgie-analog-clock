@@ -4,20 +4,27 @@
 
 ## Add an analog clock to the Budgie Panel
 
-This applet it still very much being worked on.  Therefore, stability is not promised.
-The applet currently allows you to scale the clock and change colors through the settings.
+This applet is a work in progress.  While it so far has ben running quite well,
+testing hasn't been extensive, so stability is not guaranteed.
 
-Current issues:
-* To prevent panel overlap issues, if you decrease the panel size, the clock will decrease in size if necessary to keep it smaller than the panel.  If you then increase the panel size, you will need to re-adjust the clock size if you want it to be larger again.  It doesn't "remember" the old setting.
+The applet currently allows you to:
+* Change the clock size through the applet settings
+* Change the color of the frame, face, and hands
+* Enable or disable the hour markings on the face
+
+The applet will respect the panel settings, and not draw a clock larger than
+the Budgie Panel.  However, if the panel is resized, the clock will change size
+as well, up to the clock size specificed in the applet setting
 
 This requires python3-svgwrite to be installed:
-(if you have Budgie Clockworks, you have this)
 * sudo apt install python3-svgwrite
 
 To install:
 ./install.sh
 
 This will:
-* check for python3-svgwrite and install if missing
+* check for python3-svgwrite
+If detected it will:
 * copy the plugin files to /usr/lib/budgie-desktop/plugins
 * compile the schema
+If not, it will inform you how to install it
