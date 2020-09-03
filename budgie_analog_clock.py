@@ -127,7 +127,7 @@ class BudgieAnalogClockSettings(Gtk.Grid):
         self.attach(switch_markings, 1, 7, 1, 1)
 
         app_settings.bind("clock-size",spin_clock_size,"value",Gio.SettingsBindFlags.DEFAULT)
-        app_settings.bind("draw-marks",switch_markings,"active",Gio.SettingsBindFlags.DEFAULT)        
+        app_settings.bind("draw-marks",switch_markings,"active",Gio.SettingsBindFlags.DEFAULT)
 
         self.show_all()
 
@@ -159,13 +159,20 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         self.validate_settings()
         self.load_settings()
 
-        self.box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+        self.box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.add(self.box)
         self.clock_image = Gtk.Image()
         self.box.add(self.clock_image)
         self.show_all()
         app_settings.connect("changed",self.on_settings_change)
         GLib.timeout_add_seconds(UPDATE_INTERVAL, self.update_time)
+
+    def do_panel_position_changed(self,position):
+        if position == Budgie.PanelPosition.TOP or position == Budgie.PanelPosition.BOTTOM:
+            self.box.set_orientation(Gtk.Orientation.HORIZONTAL)
+        else:
+            self.box.set_orientation(Gtk.Orientation.VERTICAL)
+        self.update_clock()
 
     def do_panel_size_changed(self,panel_size,icon_size,small_icon_size):
         # Keeps the clock smaller than the panel, but no smaller than 22px
