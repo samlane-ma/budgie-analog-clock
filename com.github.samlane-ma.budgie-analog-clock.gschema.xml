@@ -6,24 +6,29 @@
             <range min="22" max="100"/>
             <summary>Clock Size</summary>
             <description>
-                Size of the clock in pixels
+                Current size of the clock in pixels
             </description>
-            <default>32</default>
+            <default>28</default>
         </key>
-        <key type="s" name="clock-outline">
+        <key name="clock-outline" type="s">
             <summary>Set the color of the clock outline</summary>
             <description>Hex color of the clock outline</description>
             <default>"#000000"</default>
         </key>
-        <key type="s" name="clock-face">
+        <key name="clock-face" type="s">
             <summary>Set the color of the clock face</summary>
             <description>Hex color of the clock face</description>
             <default>"#FFFFFF"</default>
         </key>
-        <key type="s" name="clock-hands">
+        <key name="clock-hands" type="s">
             <summary>Set the color of the clock hour hand</summary>
             <description>Hex color of the clock hour hand</description>
             <default>"#000000"</default>
+        </key>
+        <key name="draw-marks" type="b">
+            <summary>Draw hour markings</summary>
+            <description>Draw the hour markings around the face of the clock</description>
+            <default>true</default>
         </key>
     </schema> 
 </schemalist>
