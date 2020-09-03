@@ -24,7 +24,6 @@ To install:
 
 This will:
 * check for python3-svgwrite
-If detected it will:
-* copy the plugin files to /usr/lib/budgie-desktop/plugins
+* if detected, copy the plugin files to /usr/lib/budgie-desktop/plugins
 * compile the schema
-If not, it will inform you how to install it
+* If not detected, it will inform you how to install it
