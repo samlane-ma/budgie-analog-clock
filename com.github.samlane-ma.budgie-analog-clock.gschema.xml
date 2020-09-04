@@ -8,7 +8,7 @@
             <description>
                 Current size of the clock in pixels
             </description>
-            <default>32</default>
+            <default>24</default>
         </key>
         <key name="clock-outline" type="s">
             <summary>Set the color of the clock outline</summary>
