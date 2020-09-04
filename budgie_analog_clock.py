@@ -32,13 +32,13 @@ from math import sin, cos, pi
     then scaled to fit panel
 """
 IMAGE_SIZE         = 100  # 100 default
-MAXIMUM_SIZE       = 100  # 100 default
+MAXIMUM_SIZE       = 200  # 100 default
 MINIMUM_SIZE       =  22  #  22 default
 X_CENTER           =  50  #  50 default
 Y_CENTER           =  50  #  50 default
 CLOCK_RADIUS       =  46  #  46 default
 HOUR_HAND_LENGTH   =  28  #  28 default
-MINUTE_HAND_LENGTH =  40  #  40 default
+MINUTE_HAND_LENGTH =  38  #  30 default
 CLOCK_THICKNESS    =   6  #   6 default
 HAND_THICKNESS     =   6  #   6 default
 MARKING_THICKNESS  =   3  #   3 default
@@ -140,7 +140,6 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         self.tmp = os.path.join("/tmp", user + "_panel_analog_clock.svg")
         self.max_size = MAXIMUM_SIZE
 
-        self.validate_settings()
         self.load_settings()
 
         self.box = Gtk.Box()
@@ -213,6 +212,7 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         return True
 
     def load_new_image(self):
+        self.clock_image.set_tooltip_text(self.current_time.strftime("%a %x"))
         self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.tmp)
         self.clock_image.set_from_pixbuf(self.pixbuf.scale_simple(self.clock_scale, self.clock_scale, 2))
 
