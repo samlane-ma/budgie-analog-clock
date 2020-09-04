@@ -36,20 +36,14 @@ MAXIMUM_SIZE       = 100  # 100 default
 MINIMUM_SIZE       =  22  #  22 default
 X_CENTER           =  50  #  50 default
 Y_CENTER           =  50  #  50 default
-CLOCK_RADIUS       =  37  #  37 default
-HOUR_HAND_LENGTH   =  21  #  21 default
-MINUTE_HAND_LENGTH =  31  #  31 default
-CLOCK_THICKNESS    =   4  #   4 default
-HAND_THICKNESS     =   4  #   6 default
-MARKING_THICKNESS  =   2  #   2 default
+CLOCK_RADIUS       =  46  #  46 default
+HOUR_HAND_LENGTH   =  28  #  28 default
+MINUTE_HAND_LENGTH =  40  #  40 default
+CLOCK_THICKNESS    =   6  #   6 default
+HAND_THICKNESS     =   6  #   6 default
+MARKING_THICKNESS  =   3  #   3 default
 UPDATE_INTERVAL    =   5  #   5 default (in seconds)
-""" The applet checks the time every UPDATE_INTERVAL seconds. However, the
-    clock only redraws if the minute has changed, so if an immediate redraw is
-    needed due to a settings change, we set the old minute to -1 to trigger the
-    redraw, instead of waiting for the minute to change. The following 
-    FORCE_REDRAW "constant" is just to clarify using "-1" in the code.
-"""
-FORCE_REDRAW = -1
+FORCE_REDRAW       =  -1
 
 app_settings = Gio.Settings.new("com.github.samlane-ma.budgie-analog-clock")
 
@@ -78,28 +72,25 @@ class BudgieAnalogClockSettings(Gtk.Grid):
     def __init__(self, setting):
         super().__init__()
 
-        self.label_colors = ["Clock Color", "Hands Color", "Face Color"]
-        self.setting_name = ["clock-outline", "clock-hands", "clock-face"]
+        self.label_text = ["", "Clock Size (px)","Clock Color","Hands Color",
+                           "Face Color","Transparent face","","Show hour marks"]
+        self.setting_name = ["clock-outline","clock-hands","clock-face"]
 
-        blank_label = Gtk.Label("")
-        self.attach(blank_label, 0, 0, 2, 1)
-        label_size = Gtk.Label("Clock Size (px)")
-        label_size.set_halign(Gtk.Align.START)
-        label_size.set_valign(Gtk.Align.CENTER)
-        self.attach(label_size, 0, 1, 1, 1)
+        for n in range(8):
+            label = Gtk.Label(self.label_text[n])
+            label.set_halign(Gtk.Align.START)
+            label.set_valign(Gtk.Align.END)
+            self.attach(label, 0, n, 1, 1)
 
         spin_clock_size_adj = Gtk.Adjustment(value=app_settings.get_int("clock-size"),
-                             lower=MINIMUM_SIZE, upper=MAXIMUM_SIZE, step_incr=1)
+                                  lower=MINIMUM_SIZE, upper=MAXIMUM_SIZE, step_incr=1)
         spin_clock_size = Gtk.SpinButton()
         spin_clock_size.set_adjustment(spin_clock_size_adj)
         spin_clock_size.set_digits(0)
         self.attach(spin_clock_size, 1, 1, 1, 1)
 
         self.colorbuttons = []
-
         for n in range(3):
-            colorlabel = Gtk.Label(self.label_colors[n])
-            colorlabel.set_halign(Gtk.Align.START)
             load_color = app_settings.get_string(self.setting_name[n])
             color = Gdk.RGBA()
             if load_color == "none":
@@ -109,24 +100,13 @@ class BudgieAnalogClockSettings(Gtk.Grid):
             button = Gtk.ColorButton.new_with_rgba(color)
             button.connect("color_set",self.on_color_changed,self.setting_name[n])
             self.colorbuttons.append(button)
-            self.attach(colorlabel, 0, n+2, 1, 1)
             self.attach(self.colorbuttons[n], 1, n+2, 1, 1)
 
-        label_reset = Gtk.Label("Set clock face\ntransparent")
-        label_reset.set_halign(Gtk.Align.START)
-        button_reset_face = Gtk.Button("Set")
-        button_reset_face.connect("clicked",self.on_reset_face)
-        self.attach(label_reset, 0, 5, 1, 1)
-        self.attach(button_reset_face, 1, 5, 1, 1)
-
-        blank_label_2 = Gtk.Label("")
-        self.attach(blank_label_2, 0, 6, 2, 1)
-
-        label_markings = Gtk.Label("Show hour marks")
-        label_markings.set_halign(Gtk.Align.START)
+        button_set_transparent = Gtk.Button("Set")
+        button_set_transparent.connect("clicked",self.on_set_transparent)
+        self.attach(button_set_transparent, 1, 5, 1, 1)
         switch_markings = Gtk.Switch()
         switch_markings.set_halign(Gtk.Align.END)
-        self.attach(label_markings, 0, 7, 1, 1)
         self.attach(switch_markings, 1, 7, 1, 1)
 
         app_settings.bind("clock-size",spin_clock_size,"value",Gio.SettingsBindFlags.DEFAULT)
@@ -134,13 +114,15 @@ class BudgieAnalogClockSettings(Gtk.Grid):
 
         self.show_all()
 
-    def on_reset_face(self, button):
+    def on_set_transparent(self, button):
         self.colorbuttons[2].set_alpha(0)
         app_settings.set_string("clock-face","none")
 
-    def on_color_changed (self, button, clock_part):
+    def on_color_changed(self, button, clock_part):
         color = button.get_color()
-        hex_code = "#{:02x}{:02x}{:02x}".format(int(color.red/256),int(color.green/256),int(color.blue/256))
+        hex_code = "#{:02x}{:02x}{:02x}".format(int(color.red/256),
+                                                int(color.green/256),
+                                                int(color.blue/256))
         app_settings.set_string(clock_part, hex_code)
 
 
@@ -156,13 +138,12 @@ class BudgieAnalogClockApplet(Budgie.Applet):
 
         user = os.environ["USER"]
         self.tmp = os.path.join("/tmp", user + "_panel_analog_clock.svg")
-
         self.max_size = MAXIMUM_SIZE
 
         self.validate_settings()
         self.load_settings()
 
-        self.box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        self.box = Gtk.Box()
         self.add(self.box)
         self.clock_image = Gtk.Image()
         self.box.add(self.clock_image)
@@ -183,9 +164,7 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         if self.max_size < MINIMUM_SIZE:
             self.max_size = MINIMUM_SIZE
         current_size = app_settings.get_int("clock-size")
-        if current_size < MINIMUM_SIZE:
-            app_settings.set_int("clock-size",MINIMUM_SIZE)
-        elif current_size > self.max_size:
+        if current_size > self.max_size:
             self.clock_scale = self.max_size
         self.update_clock()
 
@@ -196,7 +175,7 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         """
         setting_name = ["clock-hands", "clock-outline", "clock-face"]
         default_color = ["#000000", "#000000", "#FFFFFF"]
-        for n in range(3):
+        for n in range(3 ):
             testcolor = Gdk.RGBA()
             colorname = app_settings.get_string(setting_name[n])
             if (colorname != "none") and (not testcolor.parse(colorname)):
@@ -224,6 +203,10 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         self.current_time = datetime.datetime.now()
         # Don't redraw unless time (minute) has changed
         if self.current_time.minute != self.old_minute:
+            """ In the rare instance where the time zone is changed while applet
+                is running, tzset will ensure the clock recognizes the change
+            """
+            time.tzset()
             self.old_minute = self.current_time.minute
             self.create_clock_image(self.current_time.hour, self.current_time.minute)
             GObject.idle_add(self.load_new_image)
@@ -244,8 +227,8 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         # Draw an outside circle for the clock, and a small circle at the base of the hands
         dwg.add(dwg.circle((X_CENTER, Y_CENTER), CLOCK_RADIUS, fill=self.fill_color,
                             stroke=self.line_color, stroke_width=CLOCK_THICKNESS))
-        dwg.add(dwg.circle((X_CENTER, Y_CENTER), 3, 
-                           stroke=self.hands_color, stroke_width=3))
+        dwg.add(dwg.circle((X_CENTER, Y_CENTER), 2, 
+                            stroke=self.hands_color, stroke_width=4))
 
         # We are going to add hour markings around the outside edge of the clock
         if self.draw_hour_marks:
@@ -271,9 +254,9 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         """ This fixes the issue that 0 degrees on a cirlce is actually 3:00
             on a clock, not 12:00 -essentially rotates the hands 90 degrees
         """
-        if hand_position < 15:
-            hand_position = hand_position + 60
-        hand_position = (hand_position - 15)
+        hand_position -= 15
+        if hand_position < 0:
+            hand_position += 60
         # And here is how we determine the x and y coordinate to draw to
         radians = (hand_position * (pi * 2) / 60)
         x_position = round (X_CENTER + length * cos(radians))
