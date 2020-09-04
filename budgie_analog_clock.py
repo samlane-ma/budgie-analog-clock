@@ -29,21 +29,22 @@ from math import sin, cos, pi
 
 """ Some "constants":
     Clock is drawn at 100x100 px resolution, with a center at 50,50 and 
-    then scaled to fit panel
+    then scaled to fit panel, but these can be played around with to fine
+    tune the clocks appearance.
 """
 IMAGE_SIZE         = 100  # 100 default
-MAXIMUM_SIZE       = 200  # 100 default
+MAXIMUM_SIZE       = 200  # 200 default
 MINIMUM_SIZE       =  22  #  22 default
 X_CENTER           =  50  #  50 default
 Y_CENTER           =  50  #  50 default
 CLOCK_RADIUS       =  46  #  46 default
 HOUR_HAND_LENGTH   =  28  #  28 default
-MINUTE_HAND_LENGTH =  38  #  30 default
-CLOCK_THICKNESS    =   6  #   6 default
-HAND_THICKNESS     =   6  #   6 default
+MINUTE_HAND_LENGTH =  38  #  38 default
+CLOCK_THICKNESS    =   5  #   5 default
+HAND_THICKNESS     =   5  #   5 default
 MARKING_THICKNESS  =   3  #   3 default
 UPDATE_INTERVAL    =   5  #   5 default (in seconds)
-FORCE_REDRAW       =  -1
+FORCE_REDRAW       =  -1  # This is just to clarify why -1 is used in the code
 
 app_settings = Gio.Settings.new("com.github.samlane-ma.budgie-analog-clock")
 
@@ -163,6 +164,7 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         if self.max_size < MINIMUM_SIZE:
             self.max_size = MINIMUM_SIZE
         current_size = app_settings.get_int("clock-size")
+        # Don't let the clock get bigger than the Budgie Panel
         if current_size > self.max_size:
             self.clock_scale = self.max_size
         self.update_clock()
@@ -174,7 +176,7 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         """
         setting_name = ["clock-hands", "clock-outline", "clock-face"]
         default_color = ["#000000", "#000000", "#FFFFFF"]
-        for n in range(3 ):
+        for n in range(3):
             testcolor = Gdk.RGBA()
             colorname = app_settings.get_string(setting_name[n])
             if (colorname != "none") and (not testcolor.parse(colorname)):
@@ -203,7 +205,8 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         # Don't redraw unless time (minute) has changed
         if self.current_time.minute != self.old_minute:
             """ In the rare instance where the time zone is changed while applet
-                is running, tzset will ensure the clock recognizes the change
+                is running, tzset will ensure the clock recognizes the change.
+                Possibly may also be needed to recognize daylight savings change?
             """
             time.tzset()
             self.old_minute = self.current_time.minute
@@ -227,8 +230,8 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         # Draw an outside circle for the clock, and a small circle at the base of the hands
         dwg.add(dwg.circle((X_CENTER, Y_CENTER), CLOCK_RADIUS, fill=self.fill_color,
                             stroke=self.line_color, stroke_width=CLOCK_THICKNESS))
-        dwg.add(dwg.circle((X_CENTER, Y_CENTER), 2, 
-                            stroke=self.hands_color, stroke_width=4))
+        dwg.add(dwg.circle((X_CENTER, Y_CENTER), 3, 
+                            stroke=self.hands_color, stroke_width=3))
 
         # We are going to add hour markings around the outside edge of the clock
         if self.draw_hour_marks:
