@@ -138,7 +138,7 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         self.uuid = uuid
 
         user = os.environ["USER"]
-        self.tmp = os.path.join("/tmp", user + "_panel_analog_clock.svg")
+        self.tmp = os.path.join("/tmp/", user + "_panel_analog_clock.svg")
         self.max_size = MAXIMUM_SIZE
 
         self.load_settings()
