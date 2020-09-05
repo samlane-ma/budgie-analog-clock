@@ -31,6 +31,5 @@ To install (for Debian/Ubuntu):
 * for other distros omit libdir or specify the location of the distro library folder
 
 This will:
-* plugin files to /usr/lib/budgie-desktop/plugins
+* install plugin files to the Budgie Desktop plugins folder
 * compile the schema
-* If not detected, it will inform you how to install it
