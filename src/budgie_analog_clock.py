@@ -43,6 +43,7 @@ MINUTE_HAND_LENGTH =  38  #  38 default
 CLOCK_THICKNESS    =   5  #   5 default
 HAND_THICKNESS     =   5  #   5 default
 MARKING_THICKNESS  =   3  #   3 default
+MARKING_LENGTH     =   8  #   8 default
 UPDATE_INTERVAL    =   5  #   5 default (in seconds)
 FORCE_REDRAW       =  -1  # This is just to clarify why -1 is used in the code
 
@@ -216,8 +217,9 @@ class BudgieAnalogClockApplet(Budgie.Applet):
 
     def load_new_image(self):
         self.clock_image.set_tooltip_text(self.current_time.strftime("%a %x"))
-        self.pixbuf = GdkPixbuf.Pixbuf.new_from_file(self.tmp)
-        self.clock_image.set_from_pixbuf(self.pixbuf.scale_simple(self.clock_scale, self.clock_scale, 2))
+        self.pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(self.tmp, self.clock_scale,
+                                                              self.clock_scale, True)
+        self.clock_image.set_from_pixbuf(self.pixbuf)
 
     def create_clock_image (self, hours, mins):
         # If time is PM
@@ -237,10 +239,10 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         if self.draw_hour_marks:
             for markings in range(12):
                 mark_rad = pi * 2 - (markings * (pi * 2) / 12)
-                mark_x_start = round (X_CENTER + (CLOCK_RADIUS - 4) * cos(mark_rad))
-                mark_x_end = round (X_CENTER + (CLOCK_RADIUS - 8) * cos(mark_rad))
-                mark_y_start = round (X_CENTER + (CLOCK_RADIUS - 4)  * sin(mark_rad))
-                mark_y_end = round (X_CENTER + (CLOCK_RADIUS -8)  * sin(mark_rad))
+                mark_x_start = round (X_CENTER + CLOCK_RADIUS * cos(mark_rad))
+                mark_x_end = round (X_CENTER + (CLOCK_RADIUS - MARKING_LENGTH) * cos(mark_rad))
+                mark_y_start = round (X_CENTER + CLOCK_RADIUS  * sin(mark_rad))
+                mark_y_end = round (X_CENTER + (CLOCK_RADIUS - MARKING_LENGTH)  * sin(mark_rad))
                 dwg.add(dwg.line((mark_x_start, mark_y_start), (mark_x_end, mark_y_end),
                                   stroke=self.line_color, stroke_width=MARKING_THICKNESS))
 
