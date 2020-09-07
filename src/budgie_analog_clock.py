@@ -79,7 +79,8 @@ class BudgieAnalogClockSettings(Gtk.Grid):
         self.setting_name = ["clock-outline","clock-hands","clock-face"]
 
         for n in range(8):
-            label = Gtk.Label(self.label_text[n])
+            label = Gtk.Label()
+            label.set_text(self.label_text[n])
             label.set_halign(Gtk.Align.START)
             label.set_valign(Gtk.Align.END)
             self.attach(label, 0, n, 1, 1)
@@ -104,7 +105,7 @@ class BudgieAnalogClockSettings(Gtk.Grid):
             self.colorbuttons.append(button)
             self.attach(self.colorbuttons[n], 1, n+2, 1, 1)
 
-        button_set_transparent = Gtk.Button("Set")
+        button_set_transparent = Gtk.Button.new_with_label("Set")
         button_set_transparent.connect("clicked",self.on_set_transparent)
         self.attach(button_set_transparent, 1, 5, 1, 1)
         switch_markings = Gtk.Switch()
