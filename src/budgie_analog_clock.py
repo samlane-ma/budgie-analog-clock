@@ -40,10 +40,10 @@ Y_CENTER           =  50  #  50 default
 CLOCK_RADIUS       =  46  #  46 default
 HOUR_HAND_LENGTH   =  28  #  28 default
 MINUTE_HAND_LENGTH =  38  #  38 default
-CLOCK_THICKNESS    =   5  #   5 default
+FRAME_THICKNESS    =   5  #   5 default
 HAND_THICKNESS     =   5  #   5 default
 MARKING_THICKNESS  =   3  #   3 default
-MARKING_LENGTH     =   8  #   8 default
+MARKING_LENGTH     =   7  #   7 default
 UPDATE_INTERVAL    =   5  #   5 default (in seconds)
 FORCE_REDRAW       =  -1  # This is just to clarify why -1 is used in the code
 
@@ -74,7 +74,7 @@ class BudgieAnalogClockSettings(Gtk.Grid):
     def __init__(self, setting):
         super().__init__()
 
-        self.label_text = ["", "Clock Size (px)","Clock Color","Hands Color",
+        self.label_text = ["", "Clock Size (px)","Frame Color","Hands Color",
                            "Face Color","Transparent face","","Show hour marks"]
         self.setting_name = ["clock-outline","clock-hands","clock-face"]
 
@@ -82,7 +82,7 @@ class BudgieAnalogClockSettings(Gtk.Grid):
             label = Gtk.Label()
             label.set_text(self.label_text[n])
             label.set_halign(Gtk.Align.START)
-            label.set_valign(Gtk.Align.END)
+            label.set_valign(Gtk.Align.CENTER)
             self.attach(label, 0, n, 1, 1)
 
         spin_clock_size_adj = Gtk.Adjustment(value=app_settings.get_int("clock-size"),
@@ -228,22 +228,18 @@ class BudgieAnalogClockApplet(Budgie.Applet):
             hours -= 12
         # Treat hour hand like minute hand so it can be between hour markings
         hours = hours * 5 + (mins / 12)
-
         dwg = svgwrite.Drawing(self.tmp, (IMAGE_SIZE, IMAGE_SIZE))
         # Draw an outside circle for the clock, and a small circle at the base of the hands
         dwg.add(dwg.circle((X_CENTER, Y_CENTER), CLOCK_RADIUS, fill=self.fill_color,
-                            stroke=self.line_color, stroke_width=CLOCK_THICKNESS))
+                            stroke=self.line_color, stroke_width=FRAME_THICKNESS))
         dwg.add(dwg.circle((X_CENTER, Y_CENTER), 3, 
-                            stroke=self.hands_color, stroke_width=3))
+                            stroke=self.hands_color, fill=self.hands_color, stroke_width=3))
 
         # We are going to add hour markings around the outside edge of the clock
         if self.draw_hour_marks:
             for markings in range(12):
-                mark_rad = pi * 2 - (markings * (pi * 2) / 12)
-                mark_x_start = round (X_CENTER + CLOCK_RADIUS * cos(mark_rad))
-                mark_x_end = round (X_CENTER + (CLOCK_RADIUS - MARKING_LENGTH) * cos(mark_rad))
-                mark_y_start = round (X_CENTER + CLOCK_RADIUS  * sin(mark_rad))
-                mark_y_end = round (X_CENTER + (CLOCK_RADIUS - MARKING_LENGTH)  * sin(mark_rad))
+                mark_x_start, mark_y_start = self.get_clock_hand_xy(markings * 5, CLOCK_RADIUS)
+                mark_x_end, mark_y_end = self.get_clock_hand_xy(markings * 5, CLOCK_RADIUS - MARKING_LENGTH)
                 dwg.add(dwg.line((mark_x_start, mark_y_start), (mark_x_end, mark_y_end),
                                   stroke=self.line_color, stroke_width=MARKING_THICKNESS))
 
