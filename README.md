@@ -4,8 +4,7 @@
 
 ## Add an analog clock to the Budgie Panel
 
-This applet is a work in progress.  While it so far has ben running quite well,
-testing hasn't been extensive, so stability is not guaranteed.
+This applet will add a simple analog clock on the Budgie panel. 
 
 The applet currently allows you to:
 * Change the clock size through the applet settings
