@@ -48,6 +48,7 @@ UPDATE_INTERVAL    =   5  #   5 default (in seconds)
 FORCE_REDRAW       =  -1  # This is just to clarify why -1 is used in the code
 
 app_settings = Gio.Settings.new("com.github.samlane-ma.budgie-analog-clock")
+path = "com.solus-project.budgie-panel"
 
 class BudgieAnalogClock(GObject.GObject, Budgie.Plugin):
     """ This is simply an entry point into your Budgie Applet implementation.
@@ -138,6 +139,7 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         Budgie.Applet.__init__(self)
 
         self.uuid = uuid
+        self.keep_running = True
 
         user = os.environ["USER"]
         self.tmp = os.path.join("/tmp/", user + "_panel_analog_clock.svg")
@@ -152,6 +154,37 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         self.show_all()
         app_settings.connect("changed",self.on_settings_change)
         GLib.timeout_add_seconds(UPDATE_INTERVAL, self.update_time)
+
+        # This triggers the applet to shut down when removed from the panel
+        # It needs a slight delay to work correctly
+        GLib.timeout_add_seconds(1, self.watch_applet, str(uuid))
+ 
+    def find_applet (self, str_uuid, applets):
+        for find_uuid in applets:
+            if find_uuid == self.uuid:
+                return True
+        return False 
+
+    def watch_applet (self, str_uuid):
+        applets = []
+        panel_settings = Gio.Settings(path);
+        allpanels_list = panel_settings.get_strv("panels");
+        for p in allpanels_list:
+            panelpath = "/com/solus-project/budgie-panel/panels/"+"{"+ p+ "}/"
+            self.currpanelsubject_settings = Gio.Settings.new_with_path(path + ".panel", panelpath)
+            applets =self.currpanelsubject_settings.get_strv("applets")
+            if self.find_applet(str_uuid, applets):
+                # Need this signal id to disconnect it on quit
+                self.signal_id = self.currpanelsubject_settings.connect(
+                              "changed::applets", self.is_applet_running)
+        return False
+
+    def is_applet_running (self, arg1, arg2):
+        applets =self.currpanelsubject_settings.get_strv("applets")
+        if not self.find_applet(self.uuid, applets):
+            # Disconnect the signal
+            self.currpanelsubject_settings.disconnect(self.signal_id)
+            self.keep_running = False 
 
     def do_panel_position_changed(self,position):
         if position == Budgie.PanelPosition.TOP or position == Budgie.PanelPosition.BOTTOM:
@@ -214,7 +247,7 @@ class BudgieAnalogClockApplet(Budgie.Applet):
             self.old_minute = self.current_time.minute
             self.create_clock_image(self.current_time.hour, self.current_time.minute)
             GObject.idle_add(self.load_new_image)
-        return True
+        return self.keep_running
 
     def load_new_image(self):
         self.clock_image.set_tooltip_text(self.current_time.strftime("%a %x"))
