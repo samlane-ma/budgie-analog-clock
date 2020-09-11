@@ -157,15 +157,15 @@ class BudgieAnalogClockApplet(Budgie.Applet):
 
         # This triggers the applet to shut down when removed from the panel
         # It needs a slight delay to work correctly
-        GLib.timeout_add_seconds(1, self.watch_applet, str(uuid))
+        GLib.timeout_add_seconds(1, self.watch_applet, self.uuid)
  
-    def find_applet (self, str_uuid, applets):
+    def find_applet (self, check_uuid, applets):
         for find_uuid in applets:
-            if find_uuid == self.uuid:
+            if find_uuid == check_uuid:
                 return True
         return False 
 
-    def watch_applet (self, str_uuid):
+    def watch_applet (self, check_uuid):
         applets = []
         panel_settings = Gio.Settings(path);
         allpanels_list = panel_settings.get_strv("panels");
@@ -173,18 +173,18 @@ class BudgieAnalogClockApplet(Budgie.Applet):
             panelpath = "/com/solus-project/budgie-panel/panels/"+"{"+ p+ "}/"
             self.currpanelsubject_settings = Gio.Settings.new_with_path(path + ".panel", panelpath)
             applets =self.currpanelsubject_settings.get_strv("applets")
-            if self.find_applet(str_uuid, applets):
+            if self.find_applet(check_uuid, applets):
                 # Need this signal id to disconnect it on quit
                 self.signal_id = self.currpanelsubject_settings.connect(
-                              "changed::applets", self.is_applet_running)
+                              "changed::applets", self.is_applet_running, self.uuid)
         return False
 
-    def is_applet_running (self, arg1, arg2):
+    def is_applet_running (self, arg1, arg2, check_uuid):
         applets =self.currpanelsubject_settings.get_strv("applets")
-        if not self.find_applet(self.uuid, applets):
+        if not self.find_applet(check_uuid, applets):
             # Disconnect the signal
             self.currpanelsubject_settings.disconnect(self.signal_id)
-            self.keep_running = False 
+            self.keep_running = False
 
     def do_panel_position_changed(self,position):
         if position == Budgie.PanelPosition.TOP or position == Budgie.PanelPosition.BOTTOM:
