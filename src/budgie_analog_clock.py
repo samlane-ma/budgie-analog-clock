@@ -263,7 +263,7 @@ class BudgieAnalogClockApplet(Budgie.Applet):
             hours -= 12
         # Treat hour hand like minute hand so it can be between hour markings
         hours = hours * 5 + (mins / 12)
-        clock_svg = createSVG(self.tmp, 100, 100)
+        clock_svg = createSVG(self.tmp, IMAGE_SIZE, IMAGE_SIZE)
         # Draw an outside circle for the clock, and a small circle at the base of the hands
         clock_svg.add_circle(X_CENTER, Y_CENTER, CLOCK_RADIUS, fill=self.fill_color,
                             stroke=self.line_color, stroke_width=FRAME_THICKNESS)

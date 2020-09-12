@@ -30,25 +30,21 @@ class createSVG:
         self.svgitems = []
 
         self.svgheader = '<?xml version="1.0" encoding="utf-8" ?>'
-        self.svgsize =  ('<svg baseProfile="full" height="'+ self.height +
-                        '" version="1.1" width="' + self.width +
-                        '" xmlns="http://www.w3.org/2000/svg"' +
-                        ' xmlns:ev="http://www.w3.org/2001/xml-events"' +
-                        ' xmlns:xlink="http://www.w3.org/1999/xlink"><defs />')
+        self.set_size(size_x, size_y)
         self.svgfooter = '</svg>'
 
     def clear_svg(self):
         self.svgitems.clear()
 
     def add_circle(self, cx, cy, r, fill, stroke, stroke_width):
-        svgcircle = ('<circle cx="' + str(cx) + '" cy="' + str(cy) + '" fill="' 
-                     + fill + '" r="' + str(r) + '" stroke="' + stroke 
+        svgcircle = ('<circle cx="' + str(cx) + '" cy="' + str(cy) + '" fill="'
+                     + fill + '" r="' + str(r) + '" stroke="' + stroke
                      + '" stroke-width="' + str(stroke_width) +'" />')
         self.svgitems.append(svgcircle)
 
     def add_line(self, x_start, y_start, x_end, y_end, stroke, stroke_width):
-        svgline = ('<line stroke="' + stroke + '" stroke-width="' + str(stroke_width) 
-                   + '" x1="' + str(x_start) + '" x2="' + str(x_end) + '" y1="' 
+        svgline = ('<line stroke="' + stroke + '" stroke-width="' + str(stroke_width)
+                   + '" x1="' + str(x_start) + '" x2="' + str(x_end) + '" y1="'
                    + str(y_start) + '" y2="' + str(y_end) + '" />')
         self.svgitems.append(svgline)
 
@@ -67,7 +63,7 @@ class createSVG:
         self.filename = filename
 
     def set_size(self, x, y):
-            self.svgsize =  ('<svg baseProfile="full" height="'+ str(y) +
+        self.svgsize =  ('<svg baseProfile="full" height="'+ str(y) +
                         '" version="1.1" width="' + str(x) +
                         '" xmlns="http://www.w3.org/2000/svg"' +
                         ' xmlns:ev="http://www.w3.org/2001/xml-events"' +
