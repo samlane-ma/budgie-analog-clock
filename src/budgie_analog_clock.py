@@ -5,6 +5,7 @@ import time
 import os
 import svgwrite
 import datetime
+from createsvg import createSVG
 from math import sin, cos, pi
 
 """
@@ -262,29 +263,28 @@ class BudgieAnalogClockApplet(Budgie.Applet):
             hours -= 12
         # Treat hour hand like minute hand so it can be between hour markings
         hours = hours * 5 + (mins / 12)
-        dwg = svgwrite.Drawing(self.tmp, (IMAGE_SIZE, IMAGE_SIZE))
+        clock_svg = createSVG(self.tmp, 100, 100)
         # Draw an outside circle for the clock, and a small circle at the base of the hands
-        dwg.add(dwg.circle((X_CENTER, Y_CENTER), CLOCK_RADIUS, fill=self.fill_color,
-                            stroke=self.line_color, stroke_width=FRAME_THICKNESS))
-        dwg.add(dwg.circle((X_CENTER, Y_CENTER), 3, 
-                            stroke=self.hands_color, fill=self.hands_color, stroke_width=3))
+        clock_svg.add_circle(X_CENTER, Y_CENTER, CLOCK_RADIUS, fill=self.fill_color,
+                            stroke=self.line_color, stroke_width=FRAME_THICKNESS)
+        clock_svg.add_circle(X_CENTER, Y_CENTER, 3, stroke=self.hands_color, 
+                            fill=self.hands_color, stroke_width=3)
 
         # We are going to add hour markings around the outside edge of the clock
         if self.draw_hour_marks:
             for markings in range(12):
                 mark_x_start, mark_y_start = self.get_clock_hand_xy(markings * 5, CLOCK_RADIUS)
                 mark_x_end, mark_y_end = self.get_clock_hand_xy(markings * 5, CLOCK_RADIUS - MARKING_LENGTH)
-                dwg.add(dwg.line((mark_x_start, mark_y_start), (mark_x_end, mark_y_end),
-                                  stroke=self.line_color, stroke_width=MARKING_THICKNESS))
-
+                clock_svg.add_line(mark_x_start, mark_y_start, mark_x_end, mark_y_end,
+                                  stroke=self.line_color, stroke_width=MARKING_THICKNESS)
         # Draw the minute and hour hands from the center to the calculated points
         hour_hand_x, hour_hand_y = self.get_clock_hand_xy (hours, HOUR_HAND_LENGTH)
         minute_hand_x, minute_hand_y = self.get_clock_hand_xy (mins, MINUTE_HAND_LENGTH)
-        dwg.add(dwg.line((X_CENTER,Y_CENTER), (hour_hand_x,hour_hand_y),
-                          stroke=self.hands_color, stroke_width=HAND_THICKNESS))
-        dwg.add(dwg.line((X_CENTER,Y_CENTER), (minute_hand_x,minute_hand_y),
-                          stroke=self.hands_color, stroke_width=HAND_THICKNESS))
-        dwg.save()
+        clock_svg.add_line(X_CENTER, Y_CENTER, hour_hand_x, hour_hand_y,
+                          stroke=self.hands_color, stroke_width=HAND_THICKNESS)
+        clock_svg.add_line(X_CENTER, Y_CENTER, minute_hand_x, minute_hand_y,
+                          stroke=self.hands_color, stroke_width=HAND_THICKNESS)
+        clock_svg.write_svg()
 
     def get_clock_hand_xy (self, hand_position,length):
         """ This fixes the issue that 0 degrees on a cirlce is actually 3:00
