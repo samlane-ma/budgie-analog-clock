@@ -15,11 +15,6 @@ The applet will respect the panel settings, and not draw a clock larger than
 the Budgie Panel.  However, if the panel is resized, the clock will change size
 as well, up to the clock size specified in the applet setting
 
-This requires python3-svgwrite to be installed:
-
-i.e. for Debian based distros
-* sudo apt install python3-svgwrite
-
 To install (for Debian/Ubuntu):
 
     mkdir build
