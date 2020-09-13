@@ -29,22 +29,25 @@ from math import sin, cos, pi
 """
 
 """ Some "constants":
-    Clock is drawn at 100x100 px resolution, with a center at 50,50 and 
+    Clock is drawn at 200x200 px resolution, with a center at 100,100 and 
     then scaled to fit panel, but these can be played around with to fine
     tune the clocks appearance.
 """
-IMAGE_SIZE         = 100  # 100 default
 MAXIMUM_SIZE       = 200  # 200 default
 MINIMUM_SIZE       =  22  #  22 default
-X_CENTER           =  50  #  50 default
-Y_CENTER           =  50  #  50 default
-CLOCK_RADIUS       =  46  #  46 default
-HOUR_HAND_LENGTH   =  28  #  28 default
-MINUTE_HAND_LENGTH =  38  #  38 default
-FRAME_THICKNESS    =   5  #   5 default
-HAND_THICKNESS     =   5  #   5 default
-MARKING_THICKNESS  =   3  #   3 default
-MARKING_LENGTH     =   7  #   7 default
+
+IMAGE_SIZE         = 200  # 200 default
+X_CENTER           = 100  #  50 default
+Y_CENTER           = 100  #  50 default
+CLOCK_RADIUS       =  92  #  46 default
+HOUR_HAND_LENGTH   =  56  #  28 default
+MINUTE_HAND_LENGTH =  76  #  38 default
+FRAME_THICKNESS    =  10  #   5 default
+HAND_THICKNESS     =  10  #   5 default
+CENTER_DOT         =   8  #   3 default
+MARKING_THICKNESS  =   8  #   4 default
+MARKING_LENGTH     =  16  #   8 default
+
 UPDATE_INTERVAL    =   5  #   5 default (in seconds)
 FORCE_REDRAW       =  -1  # This is just to clarify why -1 is used in the code
 
@@ -267,16 +270,22 @@ class BudgieAnalogClockApplet(Budgie.Applet):
         # Draw an outside circle for the clock, and a small circle at the base of the hands
         clock_svg.add_circle(X_CENTER, Y_CENTER, CLOCK_RADIUS, fill=self.fill_color,
                             stroke=self.line_color, stroke_width=FRAME_THICKNESS)
-        clock_svg.add_circle(X_CENTER, Y_CENTER, 3, stroke=self.hands_color, 
-                            fill=self.hands_color, stroke_width=3)
+        clock_svg.add_circle(X_CENTER, Y_CENTER, CENTER_DOT, stroke=self.hands_color, 
+                            fill=self.hands_color, stroke_width=1)
 
         # We are going to add hour markings around the outside edge of the clock
         if self.draw_hour_marks:
             for markings in range(12):
+                if markings % 3 != 0:
+                    mark_size = MARKING_THICKNESS * 2 / 3
+                    mark_length = MARKING_LENGTH * 2 / 3
+                else:
+                    mark_size = MARKING_THICKNESS
+                    mark_length = MARKING_LENGTH
                 mark_x_start, mark_y_start = self.get_clock_hand_xy(markings * 5, CLOCK_RADIUS)
-                mark_x_end, mark_y_end = self.get_clock_hand_xy(markings * 5, CLOCK_RADIUS - MARKING_LENGTH)
+                mark_x_end, mark_y_end = self.get_clock_hand_xy(markings * 5, CLOCK_RADIUS - mark_length)
                 clock_svg.add_line(mark_x_start, mark_y_start, mark_x_end, mark_y_end,
-                                  stroke=self.line_color, stroke_width=MARKING_THICKNESS)
+                                  stroke=self.line_color, stroke_width=mark_size)
         # Draw the minute and hour hands from the center to the calculated points
         hour_hand_x, hour_hand_y = self.get_clock_hand_xy (hours, HOUR_HAND_LENGTH)
         minute_hand_x, minute_hand_y = self.get_clock_hand_xy (mins, MINUTE_HAND_LENGTH)
